@@ -1,9 +1,9 @@
 
 pub mod computer;
 
-use crate::computer::cpu::CPU;
-
+use crate::computer::Computer;
 
 fn main() {
-    print!("Hello");
+    let computer = Computer::new();
+    dbg!(computer);
 }

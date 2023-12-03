@@ -1,3 +1,5 @@
+use core::fmt;
+
 pub struct CPU {
     // 4KB RAM
     memory: [u8; 4096],
@@ -13,4 +15,31 @@ pub struct CPU {
     sp: u8,
     // Stack
     stack: [u16; 16],
+}
+
+impl CPU {
+    pub fn new() -> CPU {
+        CPU {
+            memory: [0; 4096],
+            regs: [0; 16],
+            i_reg: 0,
+            vf: false,
+            pc: 0,
+            sp: 0,
+            stack: [0; 16],
+        }
+    }
+}
+
+impl fmt::Debug for CPU {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CPU")
+         .field("regs", &self.regs)
+         .field("i_reg", &self.i_reg)
+         .field("vf", &self.vf)
+         .field("pc", &self.pc)
+         .field("sp", &self.sp)
+         .field("stack", &self.stack)
+         .finish()
+    }
 }
