@@ -3,6 +3,8 @@ pub mod cpu;
 use core::fmt;
 use cpu::CPU;
 
+const PROGRAM_START_ADDR: usize = 0x200;
+
 pub struct Computer {
     pub cpu: CPU,
     // Display data
@@ -14,7 +16,7 @@ pub struct Computer {
     // Drawing flag - if true - SDL drawing occurs
     pub should_redraw: bool,
     // Clear screen flag - if true - SDL will clear screen
-    pub shold_clear_screen: bool,
+    pub should_clear_screen: bool,
     // Delay timer
     pub delay_timer: u8,
     // Current opcode
@@ -30,10 +32,15 @@ impl Computer {
             keyboard: [0; 16],
             waiting_key: false,
             should_redraw: false,
-            shold_clear_screen: false,
+            should_clear_screen: false,
             delay_timer: 0,
             opcode: 0,
         }
+    }
+
+    pub fn load_rom(&mut self, rom_data: Vec<u8>) {
+        let end_addr = rom_data.len() + PROGRAM_START_ADDR;
+        self.cpu.memory[PROGRAM_START_ADDR..end_addr].copy_from_slice(rom_data.as_slice());
     }
 }
 
