@@ -2,8 +2,9 @@ pub mod cpu;
 
 use core::fmt;
 use cpu::CPU;
+use crate::utils::FONT;
 
-const PROGRAM_START_ADDR: usize = 0x200;
+pub const PROGRAM_START_ADDR: usize = 0x200;
 
 pub struct Computer {
     pub cpu: CPU,
@@ -41,6 +42,22 @@ impl Computer {
     pub fn load_rom(&mut self, rom_data: Vec<u8>) {
         let end_addr = PROGRAM_START_ADDR + rom_data.len();
         self.cpu.memory[PROGRAM_START_ADDR..end_addr].copy_from_slice(rom_data.as_slice());
+    }
+
+    pub fn reset(&mut self) {
+        self.cpu.reset();
+        self.display.fill(0);
+        self.keyboard.fill(0);
+        self.waiting_key = false;
+        self.should_redraw = false;
+        self.should_clear_screen = false;
+        self.delay_timer = 0;
+        
+        self.load_font();
+    }
+
+    fn load_font(&mut self) {
+        self.cpu.memory[0..FONT.len()].copy_from_slice(&FONT);
     }
 }
 
