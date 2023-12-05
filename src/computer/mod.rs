@@ -39,7 +39,7 @@ impl Computer {
     }
 
     pub fn load_rom(&mut self, rom_data: Vec<u8>) {
-        let end_addr = rom_data.len() + PROGRAM_START_ADDR;
+        let end_addr = PROGRAM_START_ADDR + rom_data.len();
         self.cpu.memory[PROGRAM_START_ADDR..end_addr].copy_from_slice(rom_data.as_slice());
     }
 }
