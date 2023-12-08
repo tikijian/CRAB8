@@ -1,7 +1,9 @@
 pub mod cpu;
+pub mod display;
 
 use core::fmt;
 use cpu::CPU;
+use display::Display;
 use crate::utils::FONT;
 
 pub const PROGRAM_START_ADDR: usize = 0x200;
@@ -9,7 +11,7 @@ pub const PROGRAM_START_ADDR: usize = 0x200;
 pub struct Computer {
     pub cpu: CPU,
     // Display data
-    pub display: [u8; 2048],
+    pub display: Display,
     // Keyboard with 16 keys
     pub keyboard: [u8; 16],
     // Wait-key flag
@@ -29,7 +31,7 @@ impl Computer {
         Computer {
             cpu: CPU::new(),
 
-            display: [0; 2048],
+            display: Display::new(),
             keyboard: [0; 16],
             waiting_key: false,
             should_redraw: false,
@@ -46,7 +48,7 @@ impl Computer {
 
     pub fn reset(&mut self) {
         self.cpu.reset();
-        self.display.fill(0);
+        self.display.reset();
         self.keyboard.fill(0);
         self.waiting_key = false;
         self.should_redraw = false;
