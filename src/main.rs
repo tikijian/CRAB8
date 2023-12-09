@@ -11,8 +11,13 @@ fn main() {
     let rom_data = utils::load_rom("IBM").unwrap();
     computer.load_rom(rom_data);
 
-    // dbg!(computer.cpu.memory[0x503]);
-    // for value in computer.cpu.memory[0x200..0x300].iter() {
+    // for value in computer.cpu.memory[0x200..0x210].iter() {
     //     print!("{:#04x}  ", *value);
     // }
+    // println!("opcodes: ");
+    // println!("{:#04x}", computer.cpu.fetch_opcode());
+    // println!("{:#04x}", computer.cpu.fetch_opcode());
+    // println!("{:#04x}", computer.cpu.fetch_opcode());
+    // println!("{:#04x}", computer.cpu.fetch_opcode());
+    print!("{:#04x}", 0xa22a & 0xF000);
 }
