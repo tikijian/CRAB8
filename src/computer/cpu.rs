@@ -48,8 +48,51 @@ impl CPU {
         opcode |= self.memory[self.pc + 1] as u16;
 
         self.opcode = opcode;
-        // self.pc += 2; // TODO: check if it should be here
+        self.pc += 2; // TODO: check if it should be here
         self.opcode
+    }
+
+    // 00E0 
+    pub fn return_from_subroutine(&mut self) {
+        self.pc = self.stack[self.sp] as usize;
+        self.sp -= 1;
+    }
+
+    // 1nnn
+    pub fn jump_to_addr(&mut self) {
+        self.pc = (self.opcode & 0x0FFF).into();
+    }
+
+    // 2nnn
+    pub fn call_at_addr(&mut self) {
+        self.sp += 1;
+        self.stack[self.sp] = self.pc as u16;
+        self.jump_to_addr()
+    }
+
+    // 6xkk
+    pub fn put_value_to_vx(&mut self) {
+        let value: u8 = (self.opcode & 0x00FF) as u8;
+        self.set_vx(value);
+    }
+    
+    // 7xkk
+    pub fn add_value_to_vx(&mut self) {
+        let value: u8 = (self.opcode & 0x00FF) as u8;
+        let reg_id = (self.opcode & 0x0F00) as usize;
+        let current_value = self.regs[reg_id];
+
+        self.set_vx(current_value + value);
+    }
+
+    fn get_vx(self) -> u8 {
+        let reg_id = (self.opcode & 0x0F00) as usize;
+        self.regs[reg_id]
+    }
+
+    fn set_vx(&mut self, value: u8) {
+        let reg_id = (self.opcode & 0x0F00) as usize;
+        self.regs[reg_id] = value;
     }
 }
 

@@ -60,14 +60,21 @@ impl Computer {
         let op_key = opcode & 0xF000;
 
         match op_key {
-            0 => (),
-            0x1000 => (),
-            0x2000 => (),
+            0 => {
+                let op_key = opcode & 0x00FF;
+                match op_key {
+                    0xE0 => self.clear_screen(),
+                    0xEE => self.cpu.return_from_subroutine(),
+                    _ => ()
+                }
+            },
+            0x1000 => self.cpu.jump_to_addr(),
+            0x2000 => self.cpu.call_at_addr(),
             0x3000 => (),
             0x4000 => (),
             0x5000 => (),
-            0x6000 => (),
-            0x7000 => (),
+            0x6000 => self.cpu.put_value_to_vx(),
+            0x7000 => self.cpu.add_value_to_vx(),
             0x8000 => (),
             0x9000 => (),
             0xA000 => (),
@@ -76,16 +83,17 @@ impl Computer {
             0xD000 => (),
             0xE000 => (),
             0xF000 => (),
-            _ => {
-                self.cpu.pc += 2;
-            }
+            _ => panic!("Unknown opcode {:#04x}", opcode)
         };
-
-        self.cpu.pc += 2;
     }
 
     fn load_font(&mut self) {
         self.cpu.memory[0..FONT.len()].copy_from_slice(&FONT);
+    }
+
+    fn clear_screen(&mut self) {
+        self.display.reset();
+        self.should_redraw = true;
     }
 }
 
