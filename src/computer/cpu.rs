@@ -70,6 +70,32 @@ impl CPU {
         self.jump_to_addr()
     }
 
+    pub fn skip_3xkk(&mut self) {
+        let value: u8 = (self.opcode & 0x00FF) as u8;
+        if self.get_vx() == value {
+            self.pc += 2;
+        }
+    }
+    
+    pub fn skip_4xkk(&mut self) {
+        let value: u8 = (self.opcode & 0x00FF) as u8;
+        if self.get_vx() != value {
+            self.pc += 2;
+        }
+    }
+    
+    pub fn skip_5xy(&mut self) {
+        if self.get_vx() == self.get_vy() {
+            self.pc += 2;
+        }
+    }
+
+    pub fn skip_9xy(&mut self) {
+        if self.get_vx() != self.get_vy() {
+            self.pc += 2;
+        }
+    }
+
     // 6xkk
     pub fn put_value_to_vx(&mut self) {
         let value: u8 = (self.opcode & 0x00FF) as u8;
@@ -85,8 +111,24 @@ impl CPU {
         self.set_vx(current_value + value);
     }
 
-    fn get_vx(self) -> u8 {
+    // Annn
+    pub fn set_i_reg(&mut self) {
+        self.i_reg = self.opcode & 0x0FFF;
+    } 
+
+    // Bnnn
+    pub fn jump_to_addr_offset(&mut self) {
+        let addr: u16 = (self.opcode & 0x0FFF) + self.regs[0] as u16;
+        self.pc = addr.into();
+    }
+
+    fn get_vx(&self) -> u8 {
         let reg_id = (self.opcode & 0x0F00) as usize;
+        self.regs[reg_id]
+    }
+
+    fn get_vy(&self) -> u8 {
+        let reg_id = (self.opcode & 0x00F0) as usize;
         self.regs[reg_id]
     }
 
