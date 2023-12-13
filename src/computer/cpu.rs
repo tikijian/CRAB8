@@ -1,3 +1,8 @@
+
+use crate::computer::display::Display;
+use crate::computer::display::WIDTH as DISPLAY_WIDTH;
+use crate::computer::display::HEIGHT as DISPLAY_HEIGHT;
+
 use core::fmt;
 
 pub struct CPU {
@@ -47,8 +52,8 @@ impl CPU {
         opcode <<= 8u8;
         opcode |= self.memory[self.pc + 1] as u16;
 
-        self.opcode = opcode;
         self.pc += 2; // TODO: check if it should be here
+        self.opcode = opcode;
         self.opcode
     }
 
@@ -120,6 +125,31 @@ impl CPU {
     pub fn jump_to_addr_offset(&mut self) {
         let addr: u16 = (self.opcode & 0x0FFF) + self.regs[0] as u16;
         self.pc = addr.into();
+    }
+
+    // Dxyn
+    pub fn draw_sprite(&mut self, display: &mut Display) {
+        let x = self.get_vx() & DISPLAY_WIDTH;
+        let y = self.get_vy() & DISPLAY_HEIGHT;
+        let height: u8 = (self.opcode & 0x000F) as u8;
+        self.regs[0xF] = 0;
+        
+        for y_line in 0..height {
+            let pixel = self.memory[(self.i_reg + y_line as u16) as usize];
+
+            // for each bit out of 8 bytes...
+            for x_line in 0..8u8 {
+                if (pixel & (0x80 >> x_line)) != 0 {
+                    let position = (x + x_line + ((y + y_line) * 64)) as usize;
+                    
+                    if display.memory[position] == 1 {
+                        self.regs[0xF] = 1;
+                    }
+                    
+                    display.memory[position] ^= 1;
+                }
+            }
+        }
     }
 
     fn get_vx(&self) -> u8 {

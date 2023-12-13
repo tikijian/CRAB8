@@ -80,7 +80,7 @@ impl Computer {
             0xA000 => self.cpu.set_i_reg(),
             0xB000 => self.cpu.jump_to_addr_offset(),
             0xC000 => (),
-            0xD000 => (),
+            0xD000 => self.draw_sprite(),
             0xE000 => (),
             0xF000 => (),
             _ => panic!("Unknown opcode {:#04x}", opcode)
@@ -91,10 +91,16 @@ impl Computer {
         self.cpu.memory[0..FONT.len()].copy_from_slice(&FONT);
     }
 
+    fn draw_sprite(&mut self) {
+        self.cpu.draw_sprite(&mut self.display);
+        self.should_redraw = true;
+    }
+
     fn clear_screen(&mut self) {
         self.display.reset();
         self.should_redraw = true;
     }
+
 }
 
 impl fmt::Debug for Computer {
