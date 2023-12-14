@@ -13,18 +13,6 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use std::time::Duration;
-// fn main() {
-
-//     // for value in computer.cpu.memory[0x200..0x210].iter() {
-//     //     print!("{:#04x}  ", *value);
-//     // }
-//     // println!("opcodes: ");
-//     // println!("{:#04x}", computer.cpu.fetch_opcode());
-//     // println!("{:#04x}", computer.cpu.fetch_opcode());
-//     // println!("{:#04x}", computer.cpu.fetch_opcode());
-//     // println!("{:#04x}", computer.cpu.fetch_opcode());
-//     print!("{:#04x}", 0xa22a & 0xF000);
-// }
 
 const SCALE_FACTOR: f32 = 10.0;
 
@@ -79,34 +67,33 @@ pub fn main() -> Result<(), String> {
             computer.should_clear_screen = false;
         }
 
-        canvas.set_draw_color(Color::WHITE);
-        canvas.draw_point(Point::new(63, 31));
-
         if computer.should_redraw {
             canvas.set_draw_color(Color::WHITE);
+            let mut x_pos: i32 = 0;
             let mut y_pos: i32 = 0;
-            let display_divisor = DISPLAY_WIDTH - 1;
+            let display_divisor: i32 = (DISPLAY_WIDTH - 1).into();
 
-            for (pixel_index, &pixel_data) in computer.display.memory.iter().enumerate() {
-                if pixel_data == 0 {
-                    continue;
+            for pixel_data in computer.display.memory {
+                if pixel_data != 0 {
+                    canvas.draw_point(Point::new(x_pos, y_pos)).unwrap();
                 }
 
                 // calculate Y coordinate in linear array of pixels
-                let x_pos: i32  = (pixel_index as u8 % display_divisor).into();
-                if pixel_index > 0 && x_pos == 0 {
+                if x_pos != 0 && (x_pos % display_divisor as i32) == 0 {
+                    x_pos = 0;
                     y_pos += 1;
+                } else {
+                    x_pos += 1;
                 }
-
-                canvas.draw_point(Point::new(x_pos, y_pos)).unwrap();
             }
 
             canvas.present();
             computer.should_redraw = false;
         }
-            canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
-
+    // for value in computer.display.memory {
+    //     print!("{}", value);
+    // }
     Ok(())
 }
