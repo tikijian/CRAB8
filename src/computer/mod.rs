@@ -98,7 +98,7 @@ impl Computer {
 
     fn clear_screen(&mut self) {
         self.display.reset();
-        self.should_redraw = true;
+        self.should_clear_screen = true;
     }
 
 }

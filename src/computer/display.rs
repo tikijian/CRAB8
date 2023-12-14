@@ -1,5 +1,5 @@
-pub const WIDTH: u8 = 63;
-pub const HEIGHT: u8 = 31;
+pub const WIDTH: u8 = 64;
+pub const HEIGHT: u8 = 32;
 
 pub struct Display {
     pub memory: [u8; 2048],

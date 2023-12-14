@@ -54,6 +54,7 @@ impl CPU {
 
         self.pc += 2; // TODO: check if it should be here
         self.opcode = opcode;
+        println!("OPCODE: {:#04x}", self.opcode);
         self.opcode
     }
 
@@ -110,10 +111,10 @@ impl CPU {
     // 7xkk
     pub fn add_value_to_vx(&mut self) {
         let value: u8 = (self.opcode & 0x00FF) as u8;
-        let reg_id = (self.opcode & 0x0F00) as usize;
-        let current_value = self.regs[reg_id];
+        // let reg_id = (self.opcode & 0x0F00) as usize;
+        // let current_value = self.regs[reg_id];
 
-        self.set_vx(current_value + value);
+        self.set_vx(self.get_vx() + value);
     }
 
     // Annn
@@ -129,8 +130,10 @@ impl CPU {
 
     // Dxyn
     pub fn draw_sprite(&mut self, display: &mut Display) {
-        let x = self.get_vx() & DISPLAY_WIDTH;
-        let y = self.get_vy() & DISPLAY_HEIGHT;
+        let x = self.get_vx() & (DISPLAY_WIDTH - 1);
+        let y = self.get_vy() & (DISPLAY_HEIGHT - 1);
+        dbg!(x);
+        dbg!(y);
         let height: u8 = (self.opcode & 0x000F) as u8;
         self.regs[0xF] = 0;
         
@@ -138,9 +141,10 @@ impl CPU {
             let pixel = self.memory[(self.i_reg + y_line as u16) as usize];
 
             // for each bit out of 8 bytes...
-            for x_line in 0..8u8 {
+            for x_line in 0..8u16 {
                 if (pixel & (0x80 >> x_line)) != 0 {
-                    let position = (x + x_line + ((y + y_line) * 64)) as usize;
+                    let position = (x as u16 + x_line as u16 + ((y + y_line) as u16 * 64)) as usize;
+
                     
                     if display.memory[position] == 1 {
                         self.regs[0xF] = 1;
@@ -153,17 +157,18 @@ impl CPU {
     }
 
     fn get_vx(&self) -> u8 {
-        let reg_id = (self.opcode & 0x0F00) as usize;
+        let reg_id = ((self.opcode & 0x0F00) >> 8) as usize;
         self.regs[reg_id]
     }
 
     fn get_vy(&self) -> u8 {
-        let reg_id = (self.opcode & 0x00F0) as usize;
+        let reg_id = ((self.opcode & 0x00F0) >> 4) as usize;
         self.regs[reg_id]
     }
 
     fn set_vx(&mut self, value: u8) {
-        let reg_id = (self.opcode & 0x0F00) as usize;
+        // println!("{:#04x} - {:#04x}", self.opcode, ((self.opcode & 0x0F00) >> 8) as usize);
+        let reg_id = (self.opcode & 0x0F00 >> 8) as usize;
         self.regs[reg_id] = value;
     }
 }
