@@ -1,4 +1,4 @@
-
+use crate::computer::opcode::Opcode;
 use crate::computer::display::Display;
 use crate::computer::display::WIDTH as DISPLAY_WIDTH;
 // use crate::computer::display::HEIGHT as DISPLAY_HEIGHT;
@@ -20,7 +20,7 @@ pub struct CPU {
     pub sp: usize,
     // Stack
     pub stack: [u16; 16],
-    pub opcode: u16,
+    pub opcode: Opcode,
 }
 
 impl CPU {
@@ -33,7 +33,7 @@ impl CPU {
             pc: 0,
             sp: 0,
             stack: [0; 16],
-            opcode: 0
+            opcode: Opcode::new(0)
         }
     }
 
@@ -47,15 +47,11 @@ impl CPU {
         self.pc = super::PROGRAM_START_ADDR;
     }
 
-    pub fn fetch_opcode(&mut self) -> u16 {
-        let mut opcode: u16 = self.memory[self.pc].into();
-        opcode <<= 8u8;
-        opcode |= self.memory[self.pc + 1] as u16;
-
+    pub fn fetch_opcode(&mut self) -> Opcode {
+        self.opcode = Opcode::from(self.memory[self.pc], self.memory[self.pc + 1]);
         self.pc += 2; // TODO: check if it should be here
-        self.opcode = opcode;
         println!("OPCODE: {:#04x}", self.opcode);
-        self.opcode
+        self.opcode.clone()
     }
 
     // 00E0 
@@ -66,7 +62,7 @@ impl CPU {
 
     // 1nnn
     pub fn jump_to_addr(&mut self) {
-        self.pc = (self.opcode & 0x0FFF).into();
+        self.pc = self.opcode.get_nnn() as usize;
     }
 
     // 2nnn
@@ -77,15 +73,13 @@ impl CPU {
     }
 
     pub fn skip_3xkk(&mut self) {
-        let value: u8 = (self.opcode & 0x00FF) as u8;
-        if self.get_vx() == value {
+        if self.get_vx() == self.opcode.get_nn() {
             self.pc += 2;
         }
     }
     
     pub fn skip_4xkk(&mut self) {
-        let value: u8 = (self.opcode & 0x00FF) as u8;
-        if self.get_vx() != value {
+        if self.get_vx() != self.opcode.get_nn() {
             self.pc += 2;
         }
     }
@@ -104,25 +98,24 @@ impl CPU {
 
     // 6xkk
     pub fn put_value_to_vx(&mut self) {
-        let value: u8 = (self.opcode & 0x00FF) as u8;
-        self.set_vx(value);
+        self.set_vx(self.opcode.get_nn());
     }
     
     // 7xkk
     pub fn add_value_to_vx(&mut self) {
-        let value: u8 = (self.opcode & 0x00FF) as u8;
+        let value: u8 = self.opcode.get_nn();
         println!("   ADD {:#04x} + {:#04x}", self.get_vx(), value);
         self.set_vx(self.get_vx() + value);
     }
 
     // Annn
     pub fn set_i_reg(&mut self) {
-        self.i_reg = self.opcode & 0x0FFF;
+        self.i_reg = self.opcode.get_nnn();
     } 
 
     // Bnnn
     pub fn jump_to_addr_offset(&mut self) {
-        let addr: u16 = (self.opcode & 0x0FFF) + self.regs[0] as u16;
+        let addr: u16 = self.opcode.get_nnn() + self.regs[0] as u16;
         self.pc = addr.into();
     }
 
@@ -130,18 +123,15 @@ impl CPU {
     pub fn draw_sprite(&mut self, display: &mut Display) {
         let x = self.get_vx();// & (DISPLAY_WIDTH - 1);
         let y = self.get_vy();// & (DISPLAY_HEIGHT - 1);
-        dbg!(x);
-        dbg!(y);
-        let height: u8 = (self.opcode & 0x000F) as u8;
+        let height: u8 = self.opcode.get_z();
         self.regs[0xF] = 0;
         
         for y_line in 0..height {
             let pixel = self.memory[(self.i_reg + y_line as u16) as usize];
 
-            // for each bit out of 8 bytes...
             for x_line in 0..8u16 {
                 if (pixel & (0x80 >> x_line)) != 0 {
-                    let position = (x as u16 + x_line as u16 + ((y + y_line) as u16 * DISPLAY_WIDTH as u16)) as usize;
+                    let position = (x as u16 + x_line + ((y + y_line) as u16 * DISPLAY_WIDTH as u16)) as usize;
                     
                     if display.memory[position] == 1 {
                         self.regs[0xF] = 1;
@@ -154,19 +144,17 @@ impl CPU {
     }
 
     fn get_vx(&self) -> u8 {
-        let reg_id = ((self.opcode & 0x0F00) >> 8) as usize;
-        self.regs[reg_id]
+        self.regs[self.opcode.get_x() as usize]
     }
 
     fn set_vx(&mut self, value: u8) {
-        let reg_id = ((self.opcode & 0x0F00) >> 8) as usize;
+        let reg_id = self.opcode.get_x() as usize;
         println!("   SET V{} - {:#04x}", reg_id, value);
         self.regs[reg_id] = value;
     }
     
     fn get_vy(&self) -> u8 {
-        let reg_id = ((self.opcode & 0x00F0) >> 4) as usize;
-        self.regs[reg_id]
+        self.regs[self.opcode.get_y() as usize]
     }
 }
 

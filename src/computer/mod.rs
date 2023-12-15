@@ -1,5 +1,6 @@
 pub mod cpu;
 pub mod display;
+pub mod opcode;
 
 use core::fmt;
 use cpu::CPU;
@@ -57,11 +58,11 @@ impl Computer {
 
     pub fn emulate_cycle(&mut self) {
         let opcode = self.cpu.fetch_opcode();
-        let op_key = opcode & 0xF000;
+        let op_key = opcode.value() & 0xF000;
 
         match op_key {
             0 => {
-                let op_key = opcode & 0x00FF;
+                let op_key = opcode.get_nn();
                 match op_key {
                     0xE0 => self.clear_screen(),
                     0xEE => self.cpu.return_from_subroutine(),
@@ -83,7 +84,7 @@ impl Computer {
             0xD000 => self.draw_sprite(),
             0xE000 => (),
             0xF000 => (),
-            _ => panic!("Unknown opcode {:#04x}", opcode)
+            _ => panic!("Unknown opcode {:#04x}", opcode.value())
         };
     }
 
