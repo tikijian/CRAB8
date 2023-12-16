@@ -20,6 +20,7 @@ pub struct CPU {
     pub sp: usize,
     // Stack
     pub stack: [u16; 16],
+    // Current opcode
     pub opcode: Opcode,
 }
 
@@ -88,6 +89,91 @@ impl CPU {
         if self.get_vx() == self.get_vy() {
             self.pc += 2;
         }
+    }
+
+    // 8xy0
+    pub fn vy_to_vx(&mut self) {
+        self.set_vx(self.get_vy());
+    }
+    
+    // 8xy1
+    pub fn vx_or_vy(&mut self) {
+        self.set_vx(self.get_vx() | self.get_vy());
+    }
+
+    // 8xy2
+    pub fn vx_and_vy(&mut self) {
+        self.set_vx(self.get_vx() & self.get_vy());
+    }
+
+    // 8xy3
+    pub fn vx_xor_vy(&mut self) {
+        self.set_vx(self.get_vx() ^ self.get_vy());
+    }
+
+    // 8xy4
+    pub fn vx_add_vy(&mut self) {
+        let (value, is_overflow) = self.get_vx().overflowing_add(self.get_vy());
+        if is_overflow {
+            self.regs[0xF] = 1;
+        } else {
+            self.regs[0xF] = 0;
+        }
+        self.set_vx(value);
+    }
+
+    // 8xy5
+    pub fn vx_sub_vy(&mut self) {
+        let x = self.get_vx();
+        let y = self.get_vy();
+
+        if x > y {
+            self.regs[0xF] = 1;
+        } else {
+            self.regs[0xF] = 0;
+        }
+        
+        self.set_vx(x - y);
+    }
+
+    // 8xy6
+    pub fn vx_shr(&mut self) {
+        let x = self.get_vx();
+
+        if x % 2 == 1 {
+            self.regs[0xF] = 1;
+        } else {
+            self.regs[0xF] = 0;
+        }
+        
+        self.set_vx(x >> 1);
+    }
+
+    // 8xy7
+    pub fn vy_sub_vx(&mut self) {
+        let x = self.get_vx();
+        let y = self.get_vy();
+
+        if y > x {
+            self.regs[0xF] = 1;
+        } else {
+            self.regs[0xF] = 0;
+        }
+        
+        self.set_vx(y - x);
+    }
+
+    // 8xyE
+    pub fn vx_shl(&mut self) {
+        let x = self.get_vx();
+        
+        if x & 0b10000000 != 0 {
+            self.regs[0xF] = 1;
+        } else {
+            self.regs[0xF] = 0;
+        }
+
+        self.set_vx(x << 1);
     }
 
     pub fn skip_9xy(&mut self) {

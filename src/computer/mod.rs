@@ -76,7 +76,21 @@ impl Computer {
             0x5000 => self.cpu.skip_5xy(),
             0x6000 => self.cpu.put_value_to_vx(),
             0x7000 => self.cpu.add_value_to_vx(),
-            0x8000 => (),
+            0x8000 => {
+                let op_key = opcode.get_z();
+                match op_key {
+                    0 => self.cpu.vy_to_vx(),
+                    0x1 => self.cpu.vx_or_vy(),
+                    0x2 => self.cpu.vx_and_vy(),
+                    0x3 => self.cpu.vx_xor_vy(),
+                    0x4 => self.cpu.vx_add_vy(),
+                    0x5 => self.cpu.vx_sub_vy(),
+                    0x6 => self.cpu.vx_shr(),
+                    0x7 => self.cpu.vy_sub_vx(),
+                    0xE => self.cpu.vx_shl(),
+                    _ => panic!("Unknown opcode {:#04x}", opcode.value())
+                }
+            },
             0x9000 => self.cpu.skip_9xy(),
             0xA000 => self.cpu.set_i_reg(),
             0xB000 => self.cpu.jump_to_addr_offset(),
