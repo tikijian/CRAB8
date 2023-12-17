@@ -124,11 +124,7 @@ impl CPU {
         let (value, is_overflow) = self.get_vx().overflowing_add(self.get_vy());
         self.set_vx(value);
         
-        if is_overflow {
-            self.regs[0xF] = 1;
-        } else {
-            self.regs[0xF] = 0;
-        }
+        self.regs[0xF] = if is_overflow { 1 } else { 0 };
     }
 
     // 8xy5
@@ -136,11 +132,7 @@ impl CPU {
         let (value, is_overflow) = self.get_vx().overflowing_sub(self.get_vy());
         self.set_vx(value);
 
-        if is_overflow {
-            self.regs[0xF] = 0;
-        } else {
-            self.regs[0xF] = 1;
-        }
+        self.regs[0xF] = if is_overflow { 0 } else { 1 };
     }
 
     // 8xy6
@@ -148,11 +140,7 @@ impl CPU {
         let x = self.get_vx();
         self.set_vx(x >> 1);
 
-        if x % 2 == 1 {
-            self.regs[0xF] = 1;
-        } else {
-            self.regs[0xF] = 0;
-        }
+        self.regs[0xF] = if x % 2 == 1 { 1 } else { 0 };
     }
 
     // 8xy7
@@ -160,11 +148,7 @@ impl CPU {
         let (value, is_overflow) = self.get_vy().overflowing_sub(self.get_vx());
         self.set_vx(value);
 
-        if is_overflow {
-            self.regs[0xF] = 0;
-        } else {
-            self.regs[0xF] = 1;
-        }
+        self.regs[0xF] = if is_overflow { 0 } else { 1 };
     }
 
     // 8xyE
@@ -173,11 +157,7 @@ impl CPU {
         self.set_vx(x << 1);
         // Possibly here should be VY modification
         
-        if x & 0b10000000 != 0 {
-            self.regs[0xF] = 1;
-        } else {
-            self.regs[0xF] = 0;
-        }
+        self.regs[0xF] = if x & 0b10000000 != 0 { 1 } else { 0 };
     }
 
     pub fn skip_9xy(&mut self) {
