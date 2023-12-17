@@ -1,3 +1,5 @@
+use tinyrand::{Rand, StdRand};
+
 use crate::computer::opcode::Opcode;
 use crate::computer::display::Display;
 use crate::computer::display::WIDTH as DISPLAY_WIDTH;
@@ -22,6 +24,8 @@ pub struct CPU {
     pub stack: [u16; 16],
     // Current opcode
     pub opcode: Opcode,
+    
+    rand: StdRand
 }
 
 impl CPU {
@@ -34,7 +38,8 @@ impl CPU {
             pc: 0,
             sp: 0,
             stack: [0; 16],
-            opcode: Opcode::new(0)
+            opcode: Opcode::new(0),
+            rand: StdRand::default()
         }
     }
 
@@ -166,6 +171,7 @@ impl CPU {
     // 8xyE
     pub fn vx_shl(&mut self) {
         let x = self.get_vx();
+        // Possibly here should be VY modification
         
         if x & 0b10000000 != 0 {
             self.regs[0xF] = 1;
@@ -205,6 +211,12 @@ impl CPU {
         self.pc = addr.into();
     }
 
+    // Cxnn
+    pub fn add_random_to_vx(&mut self) {
+        let random_number = self.rand.next_lim_u16(0xFF) as u8;
+        self.set_vx(random_number & self.opcode.get_nn());
+    }
+
     // Dxyn
     pub fn draw_sprite(&mut self, display: &mut Display) {
         let x = self.get_vx();// & (DISPLAY_WIDTH - 1);
@@ -226,6 +238,20 @@ impl CPU {
                     display.memory[position] ^= 1;
                 }
             }
+        }
+    }
+
+    // Ex9E
+    pub fn skip_on_keydown(&mut self, keyboard: &[bool; 16]) {
+        if keyboard[self.opcode.get_x() as usize] {
+            self.pc += 2;
+        }
+    }
+
+    // ExA1
+    pub fn skip_on_keyup(&mut self, keyboard: &[bool; 16]) {
+        if !keyboard[self.opcode.get_x() as usize] {
+            self.pc += 2;
         }
     }
 

@@ -7,6 +7,8 @@ use cpu::CPU;
 use display::Display;
 use crate::utils::FONT;
 
+use self::opcode::Opcode;
+
 pub const PROGRAM_START_ADDR: usize = 0x200;
 
 pub struct Computer {
@@ -14,7 +16,7 @@ pub struct Computer {
     // Display data
     pub display: Display,
     // Keyboard with 16 keys
-    pub keyboard: [u8; 16],
+    pub keyboard: [bool; 16], // TODO: Keyboard type
     // Wait-key flag
     pub waiting_key: bool,
     // Drawing flag - if true - SDL drawing occurs
@@ -29,9 +31,9 @@ impl Computer {
     pub fn new() -> Computer {
         Computer {
             cpu: CPU::new(),
-
             display: Display::new(),
-            keyboard: [0; 16],
+
+            keyboard: [false; 16],
             waiting_key: false,
             should_redraw: false,
             should_clear_screen: false,
@@ -42,7 +44,7 @@ impl Computer {
     pub fn reset(&mut self) {
         self.cpu.reset();
         self.display.reset();
-        self.keyboard.fill(0);
+        self.keyboard.fill(false);
         self.waiting_key = false;
         self.should_redraw = false;
         self.should_clear_screen = false;
@@ -66,7 +68,7 @@ impl Computer {
                 match op_key {
                     0xE0 => self.clear_screen(),
                     0xEE => self.cpu.return_from_subroutine(),
-                    _ => ()
+                    _ => self.unknow_opcode_error(opcode)
                 }
             },
             0x1000 => self.cpu.jump_to_addr(),
@@ -88,17 +90,24 @@ impl Computer {
                     0x6 => self.cpu.vx_shr(),
                     0x7 => self.cpu.vy_sub_vx(),
                     0xE => self.cpu.vx_shl(),
-                    _ => panic!("Unknown opcode {:#04x}", opcode.value())
+                    _ => self.unknow_opcode_error(opcode)
                 }
             },
             0x9000 => self.cpu.skip_9xy(),
             0xA000 => self.cpu.set_i_reg(),
             0xB000 => self.cpu.jump_to_addr_offset(),
-            0xC000 => (),
+            0xC000 => self.cpu.add_random_to_vx(),
             0xD000 => self.draw_sprite(),
-            0xE000 => (),
+            0xE000 => {
+                let op_key = opcode.get_nn();
+                match op_key {
+                    0x9E => self.cpu.skip_on_keydown(&self.keyboard),
+                    0xA1 => self.cpu.skip_on_keyup(&self.keyboard), 
+                    _ => self.unknow_opcode_error(opcode)
+                }
+            },
             0xF000 => (),
-            _ => panic!("Unknown opcode {:#04x}", opcode.value())
+            _ => self.unknow_opcode_error(opcode)
         };
     }
 
@@ -114,6 +123,10 @@ impl Computer {
     fn clear_screen(&mut self) {
         self.display.reset();
         self.should_clear_screen = true;
+    }
+
+    fn unknow_opcode_error(&self, opcode: Opcode) -> ! {
+        panic!("Unknown opcode {:#04x}", opcode.value())
     }
 
 }
