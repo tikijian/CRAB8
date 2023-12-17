@@ -25,6 +25,8 @@ pub struct Computer {
     pub should_clear_screen: bool,
     // Delay timer
     pub delay_timer: u8,
+    // Sound timer
+    pub sound_timer: u8,
 }
 
 impl Computer {
@@ -38,6 +40,7 @@ impl Computer {
             should_redraw: false,
             should_clear_screen: false,
             delay_timer: 0,
+            sound_timer: 0,
         }
     }
 
@@ -106,7 +109,24 @@ impl Computer {
                     _ => self.unknow_opcode_error(opcode)
                 }
             },
-            0xF000 => (),
+            0xF000 => {
+                let op_key = opcode.get_nn();
+                match op_key {
+                    0x07 => self.cpu.set_vx(self.delay_timer),
+                    0x0A => {
+                        // TODO: stop execution on keypress await
+                        self.waiting_key = true;
+                    },
+                    0x15 => self.delay_timer = self.cpu.get_vx(),
+                    0x18 => self.sound_timer = self.cpu.get_vx(),
+                    0x1E => self.cpu.add_vx_to_i(),
+                    0x29 => self.cpu.set_font_char_addr(),
+                    0x33 => self.cpu.vx_decimal_to_ireg(),
+                    0x55 => self.cpu.store_regs_in_memory(),
+                    0x65 => self.cpu.store_memory_in_regs(),
+                    _ => self.unknow_opcode_error(opcode)
+                }
+            },
             _ => self.unknow_opcode_error(opcode)
         };
     }
@@ -127,6 +147,11 @@ impl Computer {
 
     fn unknow_opcode_error(&self, opcode: Opcode) -> ! {
         panic!("Unknown opcode {:#04x}", opcode.value())
+    }
+
+    fn register_keypress(&mut self, key_index: u8) {
+        self.keyboard[key_index as usize] = true;
+        self.waiting_key = false;
     }
 
 }

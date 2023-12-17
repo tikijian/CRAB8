@@ -22,7 +22,7 @@ pub fn main() -> Result<(), String> {
     computer.reset();
 
     // load ROM
-    let rom_data = utils::load_rom("IBM").unwrap();
+    let rom_data = utils::load_rom("test4").unwrap();
     computer.load_rom(rom_data);
 
     // init SDL
@@ -90,7 +90,7 @@ pub fn main() -> Result<(), String> {
             canvas.present();
             computer.should_redraw = false;
         }
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
     // for value in computer.display.memory {
     //     print!("{}", value);

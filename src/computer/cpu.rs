@@ -60,6 +60,8 @@ impl CPU {
         self.opcode.clone()
     }
 
+    // === Operations ===
+
     // 00E0 
     pub fn return_from_subroutine(&mut self) {
         self.pc = self.stack[self.sp] as usize;
@@ -84,6 +86,7 @@ impl CPU {
         }
     }
     
+    // 4xkk
     pub fn skip_4xkk(&mut self) {
         if self.get_vx() != self.opcode.get_nn() {
             self.pc += 2;
@@ -119,58 +122,55 @@ impl CPU {
     // 8xy4
     pub fn vx_add_vy(&mut self) {
         let (value, is_overflow) = self.get_vx().overflowing_add(self.get_vy());
+        self.set_vx(value);
+        
         if is_overflow {
             self.regs[0xF] = 1;
         } else {
             self.regs[0xF] = 0;
         }
-        self.set_vx(value);
     }
 
     // 8xy5
     pub fn vx_sub_vy(&mut self) {
-        let x = self.get_vx();
-        let y = self.get_vy();
+        let (value, is_overflow) = self.get_vx().overflowing_sub(self.get_vy());
+        self.set_vx(value);
 
-        if x > y {
-            self.regs[0xF] = 1;
-        } else {
+        if is_overflow {
             self.regs[0xF] = 0;
+        } else {
+            self.regs[0xF] = 1;
         }
-        
-        self.set_vx(x - y);
     }
 
     // 8xy6
     pub fn vx_shr(&mut self) {
         let x = self.get_vx();
+        self.set_vx(x >> 1);
 
         if x % 2 == 1 {
             self.regs[0xF] = 1;
         } else {
             self.regs[0xF] = 0;
         }
-        
-        self.set_vx(x >> 1);
     }
 
     // 8xy7
     pub fn vy_sub_vx(&mut self) {
-        let x = self.get_vx();
-        let y = self.get_vy();
+        let (value, is_overflow) = self.get_vy().overflowing_sub(self.get_vx());
+        self.set_vx(value);
 
-        if y > x {
-            self.regs[0xF] = 1;
-        } else {
+        if is_overflow {
             self.regs[0xF] = 0;
+        } else {
+            self.regs[0xF] = 1;
         }
-        
-        self.set_vx(y - x);
     }
 
     // 8xyE
     pub fn vx_shl(&mut self) {
         let x = self.get_vx();
+        self.set_vx(x << 1);
         // Possibly here should be VY modification
         
         if x & 0b10000000 != 0 {
@@ -178,8 +178,6 @@ impl CPU {
         } else {
             self.regs[0xF] = 0;
         }
-
-        self.set_vx(x << 1);
     }
 
     pub fn skip_9xy(&mut self) {
@@ -197,7 +195,7 @@ impl CPU {
     pub fn add_value_to_vx(&mut self) {
         let value: u8 = self.opcode.get_nn();
         println!("   ADD {:#04x} + {:#04x}", self.get_vx(), value);
-        self.set_vx(self.get_vx() + value);
+        self.set_vx(self.get_vx().overflowing_add(value).0);
     }
 
     // Annn
@@ -255,11 +253,55 @@ impl CPU {
         }
     }
 
-    fn get_vx(&self) -> u8 {
+    // Fx1E
+    pub fn add_vx_to_i(&mut self) {
+        self.i_reg += self.get_vx() as u16;
+    }
+
+    // Fx29
+    pub fn set_font_char_addr(&mut self) {
+        self.i_reg = (self.get_vx() as u16) * 0x5;
+    }
+
+    // Fx33
+    pub fn vx_decimal_to_ireg(&mut self) {
+        let value = self.get_vx();
+        self.memory[self.i_reg as usize] = value / 100;
+        self.memory[(self.i_reg + 1) as usize] = (value / 10) % 10;
+        self.memory[(self.i_reg + 2) as usize] = (value % 100) % 10;
+    }
+
+    // Fx55
+    pub fn store_regs_in_memory(&mut self) {
+        let x_index: usize = self.opcode.get_x().into();
+
+        for reg_index in 0..=x_index  {
+            self.memory[self.i_reg as usize + reg_index as usize] = self.regs[reg_index as usize];
+        }
+        
+        // CONFIGURABLE (new/old systems):
+        // self.i_reg += x_index + 1;
+    }
+
+    // Fx65
+    pub fn store_memory_in_regs(&mut self) {
+        let x_index: usize = self.opcode.get_x().into();
+    
+        for reg_index in 0..=x_index  {
+            self.regs[reg_index] = self.memory[self.i_reg as usize + reg_index];
+        }
+        
+        // CONFIGURABLE (new/old systems):
+        // self.i_reg += x_index + 1;
+    }
+
+    // === Helpers ===
+
+    pub fn get_vx(&self) -> u8 {
         self.regs[self.opcode.get_x() as usize]
     }
 
-    fn set_vx(&mut self, value: u8) {
+    pub fn set_vx(&mut self, value: u8) {
         let reg_id = self.opcode.get_x() as usize;
         println!("   SET V{} - {:#04x}", reg_id, value);
         self.regs[reg_id] = value;
