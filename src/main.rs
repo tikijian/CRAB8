@@ -22,7 +22,12 @@ pub fn main() -> Result<(), String> {
     computer.reset();
 
     // load ROM
-    let rom_data = utils::load_rom("test4").unwrap();
+    let args: Vec<String> = std::env::args().collect();
+    let rom_name = match args.get(1) {
+        Some(value) => value.as_str(),
+        None => "IBM"
+    };
+    let rom_data = utils::load_rom(rom_name).unwrap();
     computer.load_rom(rom_data);
 
     // init SDL
