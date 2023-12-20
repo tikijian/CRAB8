@@ -1,6 +1,8 @@
 
 extern crate sdl2;
 
+use std::time::{Duration, Instant};
+
 pub mod computer;
 pub mod utils;
 
@@ -12,7 +14,6 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
-use std::time::Duration;
 
 const SCALE_FACTOR: f32 = 10.0;
 
@@ -49,6 +50,8 @@ pub fn main() -> Result<(), String> {
     canvas.set_draw_color(Color::BLACK);
     canvas.clear();
     canvas.present();
+
+    let mut last_time = Instant::now();
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -95,10 +98,20 @@ pub fn main() -> Result<(), String> {
             canvas.present();
             computer.should_redraw = false;
         }
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+
+        if last_time.elapsed() >= Duration::from_millis(1000 / 60) {
+            if computer.delay_timer > 0 {
+                computer.delay_timer -= 1;
+            }
+            if computer.sound_timer > 0 {
+                computer.sound_timer -= 1;
+            }
+
+            last_time = Instant::now();
+        }
+
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
-    // for value in computer.display.memory {
-    //     print!("{}", value);
-    // }
+
     Ok(())
 }
