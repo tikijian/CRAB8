@@ -11,7 +11,7 @@ use crate::computer::display::WIDTH as DISPLAY_WIDTH;
 use crate::computer::display::HEIGHT as DISPLAY_HEIGHT;
 
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+use sdl2::keyboard::{Keycode, Scancode};
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 
@@ -63,19 +63,20 @@ pub fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                Event::KeyDown { keycode: Some(Keycode::Space), .. } => {
+                    //println!("Key pressed {}", event_pump.keyboard_state().is_scancode_pressed(Scancode::Space));
+                },
                 _ => {}
             }
         }
 
-        computer.emulate_cycle();
-
-        if computer.should_clear_screen {
-            canvas.set_draw_color(Color::BLACK);
-            canvas.clear();
-            computer.should_clear_screen = false;
+        if !computer.waiting_key {
+            computer.emulate_cycle();
         }
 
         if computer.should_redraw {
+            canvas.set_draw_color(Color::BLACK);
+            canvas.clear();
             canvas.set_draw_color(Color::WHITE);
             let mut x_pos: i32 = 0;
             let mut y_pos: i32 = 0;
@@ -99,6 +100,13 @@ pub fn main() -> Result<(), String> {
             computer.should_redraw = false;
         }
 
+        if computer.should_clear_screen {
+            canvas.set_draw_color(Color::BLACK);
+            canvas.clear();
+            canvas.present();
+            computer.should_clear_screen = false;
+        }
+
         if last_time.elapsed() >= Duration::from_millis(1000 / 60) {
             if computer.delay_timer > 0 {
                 computer.delay_timer -= 1;
@@ -110,7 +118,7 @@ pub fn main() -> Result<(), String> {
             last_time = Instant::now();
         }
 
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
+        //::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
 
     Ok(())
