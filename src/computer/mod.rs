@@ -118,13 +118,23 @@ impl Computer {
             0xF000 => {
                 let op_key = opcode.get_nn();
                 match op_key {
-                    0x07 => self.cpu.set_vx(self.delay_timer),
+                    0x07 => {
+                        self.cpu.set_vx(self.delay_timer);
+                        self.cpu.next_instruction();
+                    },
                     0x0A => {
                         // TODO: stop execution on keypress await
                         self.waiting_key = true;
+                        self.cpu.next_instruction();
                     },
-                    0x15 => self.delay_timer = self.cpu.get_vx(),
-                    0x18 => self.sound_timer = self.cpu.get_vx(),
+                    0x15 => {
+                        self.delay_timer = self.cpu.get_vx();
+                        self.cpu.next_instruction();
+                    },
+                    0x18 => {
+                        self.sound_timer = self.cpu.get_vx();
+                        self.cpu.next_instruction();
+                    },
                     0x1E => self.cpu.add_vx_to_i(),
                     0x29 => self.cpu.set_font_char_addr(),
                     0x33 => self.cpu.vx_decimal_to_ireg(),
@@ -149,6 +159,7 @@ impl Computer {
     fn clear_screen(&mut self) {
         self.display.reset();
         self.should_clear_screen = true;
+        self.cpu.next_instruction();
     }
 
     fn unknow_opcode_error(&self, opcode: Opcode) -> ! {

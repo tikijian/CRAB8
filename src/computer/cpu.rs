@@ -55,12 +55,15 @@ impl CPU {
 
     pub fn fetch_opcode(&mut self) -> Opcode {
         self.opcode = Opcode::from(self.memory[self.pc], self.memory[self.pc + 1]);
-        self.pc += 2;
         // println!("OPCODE: {:#04x}", self.opcode);
         self.opcode.clone()
     }
 
     // === Operations ===
+
+    pub fn next_instruction(&mut self) {
+        self.pc += 2;
+    } 
 
     // 00E0 
     pub fn return_from_subroutine(&mut self) {
@@ -76,6 +79,7 @@ impl CPU {
     // 2nnn
     pub fn call_at_addr(&mut self) {
         self.sp += 1;
+        self.pc += 2;
         self.stack[self.sp] = self.pc as u16;
         self.jump_to_addr()
     }
@@ -84,6 +88,7 @@ impl CPU {
         if self.get_vx() == self.opcode.get_nn() {
             self.pc += 2;
         }
+        self.pc += 2;
     }
     
     // 4xkk
@@ -91,32 +96,38 @@ impl CPU {
         if self.get_vx() != self.opcode.get_nn() {
             self.pc += 2;
         }
+        self.pc += 2;
     }
     
     pub fn skip_5xy(&mut self) {
         if self.get_vx() == self.get_vy() {
             self.pc += 2;
         }
+        self.pc += 2;
     }
 
     // 8xy0
     pub fn vy_to_vx(&mut self) {
         self.set_vx(self.get_vy());
+        self.pc += 2;
     }
     
     // 8xy1
     pub fn vx_or_vy(&mut self) {
         self.set_vx(self.get_vx() | self.get_vy());
+        self.pc += 2;
     }
 
     // 8xy2
     pub fn vx_and_vy(&mut self) {
         self.set_vx(self.get_vx() & self.get_vy());
+        self.pc += 2;
     }
 
     // 8xy3
     pub fn vx_xor_vy(&mut self) {
         self.set_vx(self.get_vx() ^ self.get_vy());
+        self.pc += 2;
     }
 
     // 8xy4
@@ -125,6 +136,7 @@ impl CPU {
         self.set_vx(value);
         
         self.regs[0xF] = if is_overflow { 1 } else { 0 };
+        self.pc += 2;
     }
 
     // 8xy5
@@ -133,6 +145,7 @@ impl CPU {
         self.set_vx(value);
 
         self.regs[0xF] = if is_overflow { 0 } else { 1 };
+        self.pc += 2;
     }
 
     // 8xy6
@@ -141,6 +154,7 @@ impl CPU {
         self.set_vx(x >> 1);
 
         self.regs[0xF] = if x % 2 == 1 { 1 } else { 0 };
+        self.pc += 2;
     }
 
     // 8xy7
@@ -149,6 +163,7 @@ impl CPU {
         self.set_vx(value);
 
         self.regs[0xF] = if is_overflow { 0 } else { 1 };
+        self.pc += 2;
     }
 
     // 8xyE
@@ -158,17 +173,20 @@ impl CPU {
         // Possibly here should be VY modification
         
         self.regs[0xF] = if x & 0b10000000 != 0 { 1 } else { 0 };
+        self.pc += 2;
     }
 
     pub fn skip_9xy(&mut self) {
         if self.get_vx() != self.get_vy() {
             self.pc += 2;
         }
+        self.pc += 2;
     }
 
     // 6xkk
     pub fn put_value_to_vx(&mut self) {
         self.set_vx(self.opcode.get_nn());
+        self.pc += 2;
     }
     
     // 7xkk
@@ -176,11 +194,13 @@ impl CPU {
         let value: u8 = self.opcode.get_nn();
         // println!("   ADD {:#04x} + {:#04x}", self.get_vx(), value);
         self.set_vx(self.get_vx().overflowing_add(value).0);
+        self.pc += 2;
     }
 
     // Annn
     pub fn set_i_reg(&mut self) {
         self.i_reg = self.opcode.get_nnn();
+        self.pc += 2;
     } 
 
     // Bnnn
@@ -193,6 +213,7 @@ impl CPU {
     pub fn add_random_to_vx(&mut self) {
         let random_number = self.rand.next_lim_u16(0xFF) as u8;
         self.set_vx(random_number & self.opcode.get_nn());
+        self.pc += 2;
     }
 
     // Dxyn
@@ -217,6 +238,8 @@ impl CPU {
                 }
             }
         }
+
+        self.pc += 2;
     }
 
     // Ex9E
@@ -226,6 +249,7 @@ impl CPU {
             println!("skip on keydown");
             self.pc += 2;
         }
+        self.pc += 2;
     }
 
     // ExA1
@@ -234,16 +258,19 @@ impl CPU {
             // println!("skip on keyUP");
             self.pc += 2;
         }
+        self.pc += 2;
     }
 
     // Fx1E
     pub fn add_vx_to_i(&mut self) {
         self.i_reg += self.get_vx() as u16;
+        self.pc += 2;
     }
 
     // Fx29
     pub fn set_font_char_addr(&mut self) {
         self.i_reg = (self.get_vx() as u16) * 0x5;
+        self.pc += 2;
     }
 
     // Fx33
@@ -252,6 +279,7 @@ impl CPU {
         self.memory[self.i_reg as usize] = value / 100;
         self.memory[(self.i_reg + 1) as usize] = (value / 10) % 10;
         self.memory[(self.i_reg + 2) as usize] = (value % 100) % 10;
+        self.pc += 2;
     }
 
     // Fx55
@@ -264,6 +292,7 @@ impl CPU {
         
         // CONFIGURABLE (new/old systems):
         // self.i_reg += x_index + 1;
+        self.pc += 2;
     }
 
     // Fx65
@@ -276,6 +305,7 @@ impl CPU {
         
         // CONFIGURABLE (new/old systems):
         // self.i_reg += x_index + 1;
+        self.pc += 2;
     }
 
     // === Helpers ===

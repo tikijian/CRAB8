@@ -123,7 +123,7 @@ pub fn main() -> Result<(), String> {
             last_time = Instant::now();
         }
 
-        // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 2564));
     }
 
     Ok(())

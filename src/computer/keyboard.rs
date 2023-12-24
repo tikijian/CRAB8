@@ -12,21 +12,24 @@ pub struct Keyboard {
 impl Keyboard {
     pub fn new() -> Keyboard {
         let key_indexes = [
-            (Keycode::Num1, 0),
-            (Keycode::Num2, 1),
-            (Keycode::Num3, 2),
-            (Keycode::Num4, 3),
+            (Keycode::Num1, 1),
+            (Keycode::Num2, 2),
+            (Keycode::Num3, 3),
+            (Keycode::C, 0xC),
+
             (Keycode::Q, 4),
             (Keycode::W, 5),
             (Keycode::E, 6),
-            (Keycode::R, 7),
-            (Keycode::A, 8),
-            (Keycode::S, 9),
-            (Keycode::D, 0xA),
-            (Keycode::F, 0xB),
-            (Keycode::Z, 0xC),
-            (Keycode::X, 0xD),
-            (Keycode::C, 0xE),
+            (Keycode::R, 0xD),
+
+            (Keycode::A, 7),
+            (Keycode::S, 8),
+            (Keycode::D, 9),
+            (Keycode::F, 0xE),
+
+            (Keycode::Z, 0xA),
+            (Keycode::X, 0x0),
+            (Keycode::C, 0xB),
             (Keycode::V, 0xF),
         ];
 
