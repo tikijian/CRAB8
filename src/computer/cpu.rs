@@ -3,7 +3,7 @@ use tinyrand::{Rand, StdRand};
 use crate::computer::opcode::Opcode;
 use crate::computer::display::Display;
 use crate::computer::display::WIDTH as DISPLAY_WIDTH;
-// use crate::computer::display::HEIGHT as DISPLAY_HEIGHT;
+use crate::computer::keyboard::Keyboard;
 
 use core::fmt;
 
@@ -55,8 +55,8 @@ impl CPU {
 
     pub fn fetch_opcode(&mut self) -> Opcode {
         self.opcode = Opcode::from(self.memory[self.pc], self.memory[self.pc + 1]);
-        self.pc += 2; // TODO: check if it should be here
-        println!("OPCODE: {:#04x}", self.opcode);
+        self.pc += 2;
+        // println!("OPCODE: {:#04x}", self.opcode);
         self.opcode.clone()
     }
 
@@ -174,7 +174,7 @@ impl CPU {
     // 7xkk
     pub fn add_value_to_vx(&mut self) {
         let value: u8 = self.opcode.get_nn();
-        println!("   ADD {:#04x} + {:#04x}", self.get_vx(), value);
+        // println!("   ADD {:#04x} + {:#04x}", self.get_vx(), value);
         self.set_vx(self.get_vx().overflowing_add(value).0);
     }
 
@@ -220,15 +220,18 @@ impl CPU {
     }
 
     // Ex9E
-    pub fn skip_on_keydown(&mut self, keyboard: &[bool; 16]) {
-        if keyboard[self.opcode.get_x() as usize] {
+    pub fn skip_on_keydown(&mut self, keyboard: &Keyboard) {
+        println!("{}", self.opcode.get_x());
+        if keyboard.keys[self.opcode.get_x() as usize] {
+            println!("skip on keydown");
             self.pc += 2;
         }
     }
 
     // ExA1
-    pub fn skip_on_keyup(&mut self, keyboard: &[bool; 16]) {
-        if !keyboard[self.opcode.get_x() as usize] {
+    pub fn skip_on_keyup(&mut self, keyboard: &Keyboard) {
+        if !keyboard.keys[self.opcode.get_x() as usize] {
+            // println!("skip on keyUP");
             self.pc += 2;
         }
     }
@@ -283,7 +286,7 @@ impl CPU {
 
     pub fn set_vx(&mut self, value: u8) {
         let reg_id = self.opcode.get_x() as usize;
-        println!("   SET V{} - {:#04x}", reg_id, value);
+        // println!("   SET V{} - {:#04x}", reg_id, value);
         self.regs[reg_id] = value;
     }
     

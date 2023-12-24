@@ -11,7 +11,7 @@ use crate::computer::display::WIDTH as DISPLAY_WIDTH;
 use crate::computer::display::HEIGHT as DISPLAY_HEIGHT;
 
 use sdl2::event::Event;
-use sdl2::keyboard::{Keycode, Scancode};
+use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 
@@ -63,8 +63,11 @@ pub fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown { keycode: Some(Keycode::Space), .. } => {
-                    //println!("Key pressed {}", event_pump.keyboard_state().is_scancode_pressed(Scancode::Space));
+                Event::KeyDown { keycode, .. } => {
+                    computer.register_key_event(keycode.unwrap(), true);
+                },
+                Event::KeyUp { keycode, .. } => {
+                    computer.register_key_event(keycode.unwrap(), false);
                 },
                 _ => {}
             }
@@ -72,6 +75,8 @@ pub fn main() -> Result<(), String> {
 
         if !computer.waiting_key {
             computer.emulate_cycle();
+        } else {
+            println!("waiting key...");
         }
 
         if computer.should_redraw {
@@ -118,7 +123,7 @@ pub fn main() -> Result<(), String> {
             last_time = Instant::now();
         }
 
-        //::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
+        // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
 
     Ok(())

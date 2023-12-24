@@ -1,6 +1,7 @@
 pub mod cpu;
 pub mod display;
 pub mod opcode;
+pub mod keyboard;
 
 use core::fmt;
 use cpu::CPU;
@@ -8,6 +9,7 @@ use display::Display;
 use crate::utils::FONT;
 
 use self::opcode::Opcode;
+use self::keyboard::Keyboard;
 
 pub const PROGRAM_START_ADDR: usize = 0x200;
 
@@ -16,7 +18,7 @@ pub struct Computer {
     // Display data
     pub display: Display,
     // Keyboard with 16 keys
-    pub keyboard: [bool; 16], // TODO: Keyboard type
+    pub keyboard: Keyboard,
     // Wait-key flag
     pub waiting_key: bool,
     // Drawing flag - if true - SDL drawing occurs
@@ -34,8 +36,8 @@ impl Computer {
         Computer {
             cpu: CPU::new(),
             display: Display::new(),
+            keyboard: Keyboard::new(),
 
-            keyboard: [false; 16],
             waiting_key: false,
             should_redraw: false,
             should_clear_screen: false,
@@ -47,7 +49,6 @@ impl Computer {
     pub fn reset(&mut self) {
         self.cpu.reset();
         self.display.reset();
-        self.keyboard.fill(false);
         self.waiting_key = false;
         self.should_redraw = false;
         self.should_clear_screen = false;
@@ -59,6 +60,11 @@ impl Computer {
     pub fn load_rom(&mut self, rom_data: Vec<u8>) {
         let end_addr = PROGRAM_START_ADDR + rom_data.len();
         self.cpu.memory[PROGRAM_START_ADDR..end_addr].copy_from_slice(rom_data.as_slice());
+    }
+
+    pub fn register_key_event(&mut self, keycode: sdl2::keyboard::Keycode, is_key_press: bool) {
+        self.keyboard.register_key_event(keycode, is_key_press);
+        self.waiting_key = false;
     }
 
     pub fn emulate_cycle(&mut self) {
@@ -149,10 +155,6 @@ impl Computer {
         panic!("Unknown opcode {:#04x}", opcode.value())
     }
 
-    fn register_keypress(&mut self, key_index: u8) {
-        self.keyboard[key_index as usize] = true;
-        self.waiting_key = false;
-    }
 
 }
 
